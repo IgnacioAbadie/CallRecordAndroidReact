@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
-import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -60,19 +59,19 @@ public class TService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-         final String terminate =(String)
-         intent.getExtras().get("terminate");//
-         intent.getStringExtra("terminate");
-         Log.d("TAG", "service started");
-
-         TelephonyManager telephony = (TelephonyManager)
-         getSystemService(Context.TELEPHONY_SERVICE); // TelephonyManager
-         // object
-         CustomPhoneStateListener customPhoneListener = new
-         CustomPhoneStateListener();
-         telephony.listen(customPhoneListener,
-         PhoneStateListener.LISTEN_CALL_STATE);
-         context = getApplicationContext();
+//         final String terminate =(String)
+//         intent.getExtras().get("terminate");//
+//         intent.getStringExtra("terminate");
+//         Log.d("TAG", "service started");
+//
+//         TelephonyManager telephony = (TelephonyManager)
+//         getSystemService(Context.TELEPHONY_SERVICE); // TelephonyManager
+//         // object
+//         CustomPhoneStateListener customPhoneListener = new
+//         CustomPhoneStateListener();
+//         telephony.listen(customPhoneListener,
+//         PhoneStateListener.LISTEN_CALL_STATE);
+//         context = getApplicationContext();
 
         final IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_OUT);
@@ -80,9 +79,9 @@ public class TService extends Service {
         this.br_call = new CallBr();
         this.registerReceiver(this.br_call, filter);
 
-         if(terminate != null) {
-         stopSelf();
-         }
+//         if(terminate != null) {
+//         stopSelf();
+//         }
         return START_NOT_STICKY;
     }
 
@@ -107,7 +106,7 @@ public class TService extends Service {
                         if (wasRinging == true && !recordstarted) {
 
                             Toast.makeText(context, "RESPONDIO", Toast.LENGTH_LONG).show();
-                            File sampleDir = new File(Environment.getExternalStorageDirectory(), "/APPRECORDER");
+                            File sampleDir = new File(Environment.getExternalStorageDirectory(), "/APP_RECORDER");
                             if (!sampleDir.exists()) {
                                 sampleDir.mkdirs();
                             }
