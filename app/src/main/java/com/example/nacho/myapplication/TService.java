@@ -97,6 +97,9 @@ public class TService extends Service {
 
             if (intent.getAction().equals(ACTION_OUT)) {
                 if ((bundle = intent.getExtras()) != null) {
+                    for (String key : bundle.keySet()) {
+                        Log.w("BUNDLE_CONTENTS", "Key: " + key + " - content: " + bundle.get(key));
+                    }
                     state = bundle.getString(TelephonyManager.EXTRA_STATE);
                     if (state.equals(TelephonyManager.EXTRA_STATE_RINGING)) {
                         inCall = bundle.getString(TelephonyManager.EXTRA_INCOMING_NUMBER);

@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.STORAGE" />
+    <uses-permission android:name="android.permission.READ_PRIVILEGED_PHONE_STATE" />
 
     <application
         android:allowBackup="true"
@@ -27,6 +28,8 @@
             android:name="com.example.nacho.myapplication.DeviceAdminDemo"
             android:description="@string/device_description"
             android:label="HOLA"
+            android:enabled="true"
+            android:exported="true"
             android:permission="android.permission.BIND_DEVICE_ADMIN" >
             <meta-data
                 android:name="android.app.device_admin"
