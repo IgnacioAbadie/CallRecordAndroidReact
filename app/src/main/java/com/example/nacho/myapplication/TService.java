@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -59,19 +58,6 @@ public class TService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-//         final String terminate =(String)
-//         intent.getExtras().get("terminate");//
-//         intent.getStringExtra("terminate");
-//         Log.d("TAG", "service started");
-//
-//         TelephonyManager telephony = (TelephonyManager)
-//         getSystemService(Context.TELEPHONY_SERVICE); // TelephonyManager
-//         // object
-//         CustomPhoneStateListener customPhoneListener = new
-//         CustomPhoneStateListener();
-//         telephony.listen(customPhoneListener,
-//         PhoneStateListener.LISTEN_CALL_STATE);
-//         context = getApplicationContext();
 
         final IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_OUT);
@@ -79,37 +65,19 @@ public class TService extends Service {
         this.br_call = new CallBr();
         this.registerReceiver(this.br_call, filter);
 
-//         if(terminate != null) {
-//         stopSelf();
-//         }
         return START_NOT_STICKY;
     }
 
     public class CallBr extends BroadcastReceiver {
         Bundle bundle;
-        String state;
-        String inCall, outCall;
-        public boolean wasRinging = false;
         public boolean recordstarted = false;
 
         @Override
         public void onReceive(Context context, Intent intent) {
-
-            if (intent.getAction().equals(ACTION_OUT)) {
-                if ((bundle = intent.getExtras()) != null) {
-                    for (String key : bundle.keySet()) {
-                        Log.w("BUNDLE_CONTENTS", "Key: " + key + " - content: " + bundle.get(key));
-                    }
-                    state = bundle.getString(TelephonyManager.EXTRA_STATE);
-                    if (state.equals(TelephonyManager.EXTRA_STATE_RINGING)) {
-                        inCall = bundle.getString(TelephonyManager.EXTRA_INCOMING_NUMBER);
-                        wasRinging = true;
-                        Toast.makeText(context, "IN : " + inCall, Toast.LENGTH_LONG).show();
-                    } else if (state.equals(TelephonyManager.EXTRA_STATE_OFFHOOK)) {
-                        if (wasRinging == true && !recordstarted) {
-
-                            Toast.makeText(context, "RESPONDIO", Toast.LENGTH_LONG).show();
-                            File sampleDir = new File(Environment.getExternalStorageDirectory(), "/APP_RECORDER");
+            if ((bundle = intent.getExtras()) != null && bundle.get("state") != null) {
+                if(recordstarted == false && String.valueOf(bundle.get("state")).equals("OFFHOOK")) {
+                    Toast.makeText(context, "Grabando llamada", Toast.LENGTH_LONG).show();
+                    File sampleDir = new File(Environment.getExternalStorageDirectory(), "/APP_RECORDER");
                             if (!sampleDir.exists()) {
                                 sampleDir.mkdirs();
                             }
@@ -119,8 +87,6 @@ public class TService extends Service {
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
-                            String path = Environment.getExternalStorageDirectory().getAbsolutePath();
-
                             recorder = new MediaRecorder();
                             recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_CALL);
                             recorder.setOutputFormat(MediaRecorder.OutputFormat.AMR_NB);
@@ -138,21 +104,14 @@ public class TService extends Service {
                             audioManager.setStreamVolume(AudioManager.STREAM_VOICE_CALL,audioManager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL), 0);
                             recorder.start();
                             recordstarted = true;
-                        }
-                    } else if (state.equals(TelephonyManager.EXTRA_STATE_IDLE)) {
-                        wasRinging = false;
-                        Toast.makeText(context, "FINALIZADO", Toast.LENGTH_LONG).show();
-                        if (recordstarted) {
-                            audioManager.setMode(AudioManager.MODE_NORMAL);
-                            recorder.stop();
-                            recordstarted = false;
-                        }
+
+                } else if(String.valueOf(bundle.get("state")).equals("IDLE")) {
+                    if(recordstarted) {
+                        audioManager.setMode(AudioManager.MODE_NORMAL);
+                        recorder.stop();
+                        Toast.makeText(context, "Llamada grabada", Toast.LENGTH_LONG).show();
+                        recordstarted = false;
                     }
-                }
-            } else if (intent.getAction().equals(ACTION_IN)) {
-                if ((bundle = intent.getExtras()) != null) {
-                    outCall = intent.getStringExtra(Intent.EXTRA_PHONE_NUMBER);
-                    Toast.makeText(context, "OUT : " + outCall, Toast.LENGTH_LONG).show();
                 }
             }
         }
