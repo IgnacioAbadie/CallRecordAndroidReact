@@ -41,8 +41,6 @@ public class TService extends Service {
     private CallBr br_call;
 
 
-
-
     @Override
     public IBinder onBind(Intent arg0) {
         // TODO Auto-generated method stub
@@ -71,46 +69,53 @@ public class TService extends Service {
     public class CallBr extends BroadcastReceiver {
         Bundle bundle;
         public boolean recordstarted = false;
+        public boolean isOutgoingCall;
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            if ((bundle = intent.getExtras()) != null && bundle.get("state") != null) {
-                if(recordstarted == false && String.valueOf(bundle.get("state")).equals("OFFHOOK")) {
-                    Toast.makeText(context, "Grabando llamada", Toast.LENGTH_LONG).show();
-                    File sampleDir = new File(Environment.getExternalStorageDirectory(), "/APP_RECORDER");
-                            if (!sampleDir.exists()) {
-                                sampleDir.mkdirs();
-                            }
-                            String file_name = "Record " + new SimpleDateFormat("dd-MM-yyyy hh-mm-ss").format(new Date());
-                            try {
-                                audiofile = File.createTempFile(file_name, ".amr", sampleDir);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            recorder = new MediaRecorder();
-                            recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_CALL);
-                            recorder.setOutputFormat(MediaRecorder.OutputFormat.AMR_NB);
-                            recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-                            recorder.setOutputFile(audiofile.getAbsolutePath());
-                            try {
-                                recorder.prepare();
-                            } catch (IllegalStateException e) {
-                                e.printStackTrace();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
-                            audioManager.setMode(AudioManager.MODE_IN_CALL);
-                            audioManager.setStreamVolume(AudioManager.STREAM_VOICE_CALL,audioManager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL), 0);
-                            recorder.start();
-                            recordstarted = true;
+            if (intent.getAction().equals(ACTION_OUT) || isOutgoingCall) {
+                isOutgoingCall = true;
+                Log.w("TSetvice", "ACTION: " + intent.getAction());
+                Log.w("TSetvice", "STATE: " + (intent.getExtras() != null ? intent.getExtras().get("state") : "null"));
+                if ((bundle = intent.getExtras()) != null && bundle.get("state") != null) {
+                    if (recordstarted == false && String.valueOf(bundle.get("state")).equals("OFFHOOK")) {
+                        Toast.makeText(context, "Grabando llamada", Toast.LENGTH_LONG).show();
+                        File sampleDir = new File(Environment.getExternalStorageDirectory(), "/APP_RECORDER");
+                        if (!sampleDir.exists()) {
+                            sampleDir.mkdirs();
+                        }
+                        String file_name = "Record " + new SimpleDateFormat("dd-MM-yyyy hh-mm-ss").format(new Date());
+                        try {
+                            audiofile = File.createTempFile(file_name, ".amr", sampleDir);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        recorder = new MediaRecorder();
+                        recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_CALL);
+                        recorder.setOutputFormat(MediaRecorder.OutputFormat.AMR_NB);
+                        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+                        recorder.setOutputFile(audiofile.getAbsolutePath());
+                        try {
+                            recorder.prepare();
+                        } catch (IllegalStateException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                        audioManager.setMode(AudioManager.MODE_IN_CALL);
+                        audioManager.setStreamVolume(AudioManager.STREAM_VOICE_CALL, audioManager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL), 0);
+                        recorder.start();
+                        recordstarted = true;
 
-                } else if(String.valueOf(bundle.get("state")).equals("IDLE")) {
-                    if(recordstarted) {
-                        audioManager.setMode(AudioManager.MODE_NORMAL);
-                        recorder.stop();
-                        Toast.makeText(context, "Llamada grabada", Toast.LENGTH_LONG).show();
-                        recordstarted = false;
+                    } else if (String.valueOf(bundle.get("state")).equals("IDLE")) {
+                        if (recordstarted) {
+                            audioManager.setMode(AudioManager.MODE_NORMAL);
+                            recorder.stop();
+                            Toast.makeText(context, "Llamada grabada", Toast.LENGTH_LONG).show();
+                            recordstarted = false;
+                            isOutgoingCall = false;
+                        }
                     }
                 }
             }
