@@ -3,12 +3,11 @@ package com.example.nacho.myapplication;
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
 public class MainActivity extends Activity {
-    private static final int REQUEST_CODE = 0;
+    private static final int REQUEST_CODE = 987;
     private DevicePolicyManager mDPM;
     private ComponentName mAdminName;
 
@@ -17,24 +16,9 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        try {
-            // Initiate DevicePolicyManager.
-            mDPM = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
-            mAdminName = new ComponentName(this, DeviceAdminDemo.class);
+        Intent intent = new Intent(MainActivity.this, TService.class);
+        startService(intent);
 
-            if (!mDPM.isAdminActive(mAdminName)) {
-                Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
-                intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, mAdminName);
-                intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Click on Activate button to secure your application.");
-                startActivityForResult(intent, REQUEST_CODE);
-            } else {
-                mDPM.lockNow();
-                Intent intent = new Intent(MainActivity.this, TService.class);
-                startService(intent);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -46,5 +30,4 @@ public class MainActivity extends Activity {
             startService(intent);
         }
     }
-
 }

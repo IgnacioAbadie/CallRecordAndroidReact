@@ -5,12 +5,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.media.AudioManager;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.os.IBinder;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -18,27 +17,14 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Timer;
 
 public class TService extends Service {
-    MediaRecorder recorder;
-    File audiofile;
-    String name, phonenumber;
-    String audio_format;
-    public String Audio_Type;
-    int audioSource;
-    Context context;
-    private Handler handler;
-    Timer timer;
-    Boolean offHook = false, ringing = false;
-    Toast toast;
-    Boolean isOffHook = false;
-    private boolean recordstarted = false;
-    AudioManager audioManager;
-
     private static final String ACTION_IN = "android.intent.action.PHONE_STATE";
     private static final String ACTION_OUT = "android.intent.action.NEW_OUTGOING_CALL";
+
     private CallBr br_call;
+    MediaRecorder recorder;
+    File audiofile;
 
 
     @Override
@@ -49,44 +35,56 @@ public class TService extends Service {
 
     @Override
     public void onDestroy() {
-        Log.d("service", "destroy");
-
+        Log.d("service", "onDestroy()");
+        unregisterReceiver(br_call);
         super.onDestroy();
+
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
+        Log.w("ACTIasdasdasdasdasON", "ASDASDASDASDASDASDASD" );
         final IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_OUT);
         filter.addAction(ACTION_IN);
-        this.br_call = new CallBr();
+        this.br_call = new CallBr(this);
         this.registerReceiver(this.br_call, filter);
 
         return START_NOT_STICKY;
     }
 
     public class CallBr extends BroadcastReceiver {
-        Bundle bundle;
-        public boolean recordstarted = false;
-        public boolean isOutgoingCall;
+        private static final String TAG = "CallBr";
+
+        private Bundle mBundle;
+        private boolean recordStarted;
+        private boolean isOutgoingCall;
+        private TService mService;
+
+
+        public CallBr(@NonNull TService service) {
+            mService = service;
+        }
 
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "ASDASDASDASDASDASDASD" );
+
             if (intent.getAction().equals(ACTION_OUT) || isOutgoingCall) {
                 isOutgoingCall = true;
-                Log.w("TSetvice", "ACTION: " + intent.getAction());
-                Log.w("TSetvice", "STATE: " + (intent.getExtras() != null ? intent.getExtras().get("state") : "null"));
-                if ((bundle = intent.getExtras()) != null && bundle.get("state") != null) {
-                    if (recordstarted == false && String.valueOf(bundle.get("state")).equals("OFFHOOK")) {
+                Log.w(TAG, "ACTION: " + intent.getAction());
+                Log.w(TAG, "STATE: " + (intent.getExtras() != null ? intent.getExtras().get("state") : "null"));
+                if ((mBundle = intent.getExtras()) != null && mBundle.get("state") != null) {
+                    if (!recordStarted && String.valueOf(mBundle.get("state")).equals("OFFHOOK")) {
                         Toast.makeText(context, "Grabando llamada", Toast.LENGTH_LONG).show();
                         File sampleDir = new File(Environment.getExternalStorageDirectory(), "/APP_RECORDER");
                         if (!sampleDir.exists()) {
                             sampleDir.mkdirs();
                         }
+
                         String file_name = "Record " + new SimpleDateFormat("dd-MM-yyyy hh-mm-ss").format(new Date());
                         try {
-                            audiofile = File.createTempFile(file_name, ".amr", sampleDir);
+                            audiofile = File.createTempFile(file_name, ".mp3", sampleDir);//.amr
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -97,24 +95,21 @@ public class TService extends Service {
                         recorder.setOutputFile(audiofile.getAbsolutePath());
                         try {
                             recorder.prepare();
-                        } catch (IllegalStateException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
+                            Thread.sleep(1000);
+                        } catch (IOException | InterruptedException e) {
                             e.printStackTrace();
                         }
-                        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-                        audioManager.setMode(AudioManager.MODE_IN_CALL);
-                        audioManager.setStreamVolume(AudioManager.STREAM_VOICE_CALL, audioManager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL), 0);
                         recorder.start();
-                        recordstarted = true;
+                        recordStarted = true;
 
-                    } else if (String.valueOf(bundle.get("state")).equals("IDLE")) {
-                        if (recordstarted) {
-                            audioManager.setMode(AudioManager.MODE_NORMAL);
+                    } else if (String.valueOf(mBundle.get("state")).equals("IDLE")) {
+                        if (recordStarted) {
+                            // audioManager.setMode(AudioManager.MODE_NORMAL);
                             recorder.stop();
                             Toast.makeText(context, "Llamada grabada", Toast.LENGTH_LONG).show();
-                            recordstarted = false;
+                            recordStarted = false;
                             isOutgoingCall = false;
+                            mService.stopSelf();
                         }
                     }
                 }
