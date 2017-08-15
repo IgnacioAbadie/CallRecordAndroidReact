@@ -6,25 +6,25 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.MediaRecorder;
-import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import static android.content.ContentValues.TAG;
+
 public class TService extends Service {
     private static final String ACTION_IN = "android.intent.action.PHONE_STATE";
     private static final String ACTION_OUT = "android.intent.action.NEW_OUTGOING_CALL";
 
     private CallBr br_call;
-    MediaRecorder recorder;
-    File audiofile;
+    MediaRecorder mRecorder;
+    File mAudioFile;
 
 
     @Override
@@ -43,7 +43,9 @@ public class TService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.w("ACTIasdasdasdasdasON", "ASDASDASDASDASDASDASD" );
+
+        Log.w(TAG, "Service Started" );
+
         final IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_OUT);
         filter.addAction(ACTION_IN);
@@ -57,7 +59,8 @@ public class TService extends Service {
     public class CallBr extends BroadcastReceiver {
         private static final String TAG = "CallBr";
 
-        private Bundle mBundle;
+        private String mRecordDirectory = "/APP_RECORDER";
+        private String mFileExtension = ".mp3";
         private boolean recordStarted;
         private boolean isOutgoingCall;
         private TService mService;
@@ -69,50 +72,69 @@ public class TService extends Service {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "ASDASDASDASDASDASDASD" );
+
             if (intent.getAction().equals(ACTION_OUT) || isOutgoingCall) {
+
                 isOutgoingCall = true;
-                Log.w(TAG, "ACTION: " + intent.getAction());
-                Log.w(TAG, "STATE: " + (intent.getExtras() != null ? intent.getExtras().get("state") : "null"));
-                if ((mBundle = intent.getExtras()) != null && mBundle.get("state") != null) {
-                    if (!recordStarted && String.valueOf(mBundle.get("state")).equals("OFFHOOK")) {
-                        Toast.makeText(context, "Grabando llamada", Toast.LENGTH_LONG).show();
-                        File sampleDir = new File(Environment.getExternalStorageDirectory(), "/APP_RECORDER");
-                        if (!sampleDir.exists()) {
-                            sampleDir.mkdirs();
-                        }
 
-                        String file_name = "Record " + new SimpleDateFormat("dd-MM-yyyy hh-mm-ss").format(new Date());
-                        try {
-                            audiofile = File.createTempFile(file_name, ".mp3", sampleDir);//.amr
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        recorder = new MediaRecorder();
-                        recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_CALL);
-                        recorder.setOutputFormat(MediaRecorder.OutputFormat.AMR_NB);
-                        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-                        recorder.setOutputFile(audiofile.getAbsolutePath());
-                        try {
-                            recorder.prepare();
-                            Thread.sleep(1000);
-                        } catch (IOException | InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                        recorder.start();
-                        recordStarted = true;
+                if (!recordStarted) {
+                    startRecordCallAudio();
 
-                    } else if (String.valueOf(mBundle.get("state")).equals("IDLE")) {
-                        if (recordStarted) {
-                            recorder.stop();
-                            Toast.makeText(context, "Llamada grabada", Toast.LENGTH_LONG).show();
-                            recordStarted = false;
-                            isOutgoingCall = false;
-                            mService.stopSelf();
-                        }
+                } else if (intent.getExtras() != null && String.valueOf(intent.getExtras().get("state")).equals("IDLE")) {
+                    if (recordStarted) {
+                        stopRecordCallAudio();
                     }
                 }
             }
+        }
+
+        private void startRecordCallAudio() {
+
+            Log.d(TAG, "Prepared to Record");
+
+            File sampleDir = new File(Environment.getExternalStorageDirectory(), mRecordDirectory);
+            if (!sampleDir.exists()) {
+                sampleDir.mkdirs();
+            }
+
+            String file_name = "Record " + new SimpleDateFormat("dd-MM-yyyy hh-mm-ss").format(new Date());
+
+            try {
+                mAudioFile = File.createTempFile(file_name, mFileExtension, sampleDir);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            mRecorder = new MediaRecorder();
+            mRecorder.setAudioSource(MediaRecorder.AudioSource.VOICE_CALL);
+            mRecorder.setOutputFormat(MediaRecorder.OutputFormat.AMR_NB);
+            mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+            mRecorder.setOutputFile(mAudioFile.getAbsolutePath());
+
+            try {
+                mRecorder.prepare();
+                Thread.sleep(1000);
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            mRecorder.start();
+            recordStarted = true;
+
+            Log.d(TAG, "Record Started");
+        }
+
+
+        private void stopRecordCallAudio() {
+            mRecorder.stop();
+            mRecorder.release();
+            mRecorder = null;
+            recordStarted = false;
+            isOutgoingCall = false;
+
+            Log.d(TAG, "Record Stopped");
+
+            mService.stopSelf();
         }
     }
 
