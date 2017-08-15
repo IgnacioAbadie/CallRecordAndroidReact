@@ -106,7 +106,7 @@ public class TService extends Service {
             }
 
             mRecorder = new MediaRecorder();
-            mRecorder.setAudioSource(MediaRecorder.AudioSource.VOICE_CALL);
+            mRecorder.setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION);
             mRecorder.setOutputFormat(MediaRecorder.OutputFormat.AMR_NB);
             mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
             mRecorder.setOutputFile(mAudioFile.getAbsolutePath());
@@ -118,7 +118,11 @@ public class TService extends Service {
                 e.printStackTrace();
             }
 
-            mRecorder.start();
+            try {
+                mRecorder.start();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             recordStarted = true;
 
             Log.d(TAG, "Record Started");
