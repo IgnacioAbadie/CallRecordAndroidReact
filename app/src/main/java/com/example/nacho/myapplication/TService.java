@@ -47,6 +47,7 @@ public class TService extends Service {
         final IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_OUT);
         filter.addAction(ACTION_IN);
+        filter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
         this.br_call = new CallBr(this);
         this.registerReceiver(this.br_call, filter);
 
@@ -69,7 +70,6 @@ public class TService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "ASDASDASDASDASDASDASD" );
-
             if (intent.getAction().equals(ACTION_OUT) || isOutgoingCall) {
                 isOutgoingCall = true;
                 Log.w(TAG, "ACTION: " + intent.getAction());
@@ -104,7 +104,6 @@ public class TService extends Service {
 
                     } else if (String.valueOf(mBundle.get("state")).equals("IDLE")) {
                         if (recordStarted) {
-                            // audioManager.setMode(AudioManager.MODE_NORMAL);
                             recorder.stop();
                             Toast.makeText(context, "Llamada grabada", Toast.LENGTH_LONG).show();
                             recordStarted = false;

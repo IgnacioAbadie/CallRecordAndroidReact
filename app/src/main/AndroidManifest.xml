@@ -16,13 +16,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
         <receiver
             android:name="com.example.nacho.myapplication.DeviceAdminDemo"
             android:description="@string/device_description"
@@ -30,6 +23,7 @@
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.BIND_DEVICE_ADMIN" >
+
             <meta-data
                 android:name="android.app.device_admin"
                 android:resource="@xml/my_admin" />
@@ -44,6 +38,13 @@
                 <category android:name="android.intent.category.HOME" />
             </intent-filter>
         </receiver>
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <service android:name=".TService" >
         </service>
     </application>
